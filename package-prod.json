@@ -1,0 +1,17 @@
+{
+    "name": "parsegraph-lerp",
+    "version": "1.5.5",
+    "description": "lerp",
+    "main": "dist/parsegraph-lerp.js",
+    "types": "dist/parsegraph-lerp.d.ts",
+    "repository": {
+      "type": "git",
+      "url": "git+ssh://git@github.com/parsegraph/lerp.git"
+    },
+    "author": "Rainback, Inc.",
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/parsegraph/lerp/issues"
+    },
+    "homepage": "https://github.com/parsegraph/lerp#readme"
+  }
