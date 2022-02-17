@@ -23,31 +23,36 @@ document.addEventListener("DOMContentLoaded", () => {
   trailerCanvas.style.right = "0px";
   trailerCanvas.style.top = "0px";
   trailerCanvas.style.bottom = "0px";
+  trailerCanvas.style.zIndex = "0";
   const trailerCtx = trailerCanvas.getContext("2d");
   root.appendChild(trailerCanvas);
 
   const interval = 6000;
   type Trailer = {
-    startX:number;
-    startY:number;
-    endX:number;
-    endY:number;
-    duration:number;
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+    duration: number;
     size: number;
     color: string;
     startTime: Date;
     inUse: boolean;
   };
 
-  const trailers:Trailer[] = [];
+  const trailers: Trailer[] = [];
 
-  const makeTrailer = (startX:number, startY:number, color:string):Trailer => {
+  const makeTrailer = (
+    startX: number,
+    startY: number,
+    color: string
+  ): Trailer => {
     const startTime = new Date();
     const duration = Math.random() * (interval - 1000);
     const size = Math.floor(1 + 50 * Math.random());
     const endX = Math.random() * root.clientWidth;
     const endY = Math.random() * root.clientHeight;
-    for(let i = 0; i < trailers.length; ++i) {
+    for (let i = 0; i < trailers.length; ++i) {
       const trailer = trailers[i];
       if (trailer.inUse) {
         continue;
@@ -72,23 +77,26 @@ document.addEventListener("DOMContentLoaded", () => {
       duration,
       size,
       endX,
-      endY
+      endY,
     });
   };
 
-  let playing:Date = null;
-  let lastPos:[number, number, string] = [0, 0, "rgb(255, 255, 255)"];
+  let playing: Date = null;
+  let lastPos: [number, number, string] = [0, 0, "rgb(255, 255, 255)"];
 
   const trailerDecay = 1.2;
 
   const moveContainer = () => {
-    const cleanTrailers = ()=>{
-      trailers.forEach(trailer=>{
-        if (Date.now() - trailer.startTime.getTime() > trailerDecay * trailer.duration) {
+    const cleanTrailers = () => {
+      trailers.forEach((trailer) => {
+        if (
+          Date.now() - trailer.startTime.getTime() >
+          trailerDecay * trailer.duration
+        ) {
           trailer.inUse = false;
         }
       });
-    }
+    };
     playing = new Date();
     if (trailerCanvas.width !== root.clientWidth) {
       trailerCanvas.width = root.clientWidth;
@@ -104,40 +112,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const y = Math.random() * root.clientHeight;
     container.style.left = `${x}px`;
     container.style.top = `${y}px`;
+    container.style.zIndex = "2";
 
     const minTrailers = 100;
     const numTrailers = Math.floor(minTrailers * Math.random());
     const bg = document.body.style.backgroundColor;
     if (lastPos) {
-      for(let i = 0; i < minTrailers + numTrailers; ++i) {
+      for (let i = 0; i < minTrailers + numTrailers; ++i) {
         makeTrailer(...lastPos);
       }
     }
     lastPos = [x, y, bg];
-    const animate = ()=>{
+    const animate = () => {
       if (!playing) {
         return;
       }
       trailerCtx.clearRect(0, 0, trailerCanvas.width, trailerCanvas.height);
       cleanTrailers();
       let needsUpdate = false;
-      trailers.forEach(trailer=>{
+      trailers.forEach((trailer) => {
         if (!trailer.inUse) {
           return;
         }
-        const {duration, size, startX, startY, endX, endY, color, startTime} = trailer;
-        const elapsed = Math.min(trailerDecay*duration, Date.now() - startTime.getTime());
-        const pct = Math.min(1, elapsed / (trailerDecay*duration));
+        const { duration, size, startX, startY, endX, endY, color, startTime } =
+          trailer;
+        const elapsed = Math.min(
+          trailerDecay * duration,
+          Date.now() - startTime.getTime()
+        );
+        const pct = Math.min(1, elapsed / (trailerDecay * duration));
         trailerCtx.fillStyle = color;
         trailerCtx.beginPath();
         trailerCtx.arc(
           lerp(startX, endX, pct),
           lerp(startY, endY, pct),
-          lerp(size, 1, pct), 0, 2 * Math.PI);
+          lerp(lerp(1, size, Math.min(1, pct * 5)), 1, pct),
+          0,
+          2 * Math.PI
+        );
         trailerCtx.fill();
         needsUpdate = pct < 1 || needsUpdate;
       });
-      const pct = Math.min(interval, Date.now() - playing.getTime())/interval;
+      const pct = Math.min(interval, Date.now() - playing.getTime()) / interval;
       if (needsUpdate || pct < 1) {
         requestAnimationFrame(animate);
       }
@@ -147,7 +163,11 @@ document.addEventListener("DOMContentLoaded", () => {
         trailerCtx.fillStyle = "black";
         trailerCtx.textBaseline = "bottom";
         trailerCtx.textAlign = "right";
-        trailerCtx.fillText(`trailers: ${trailers.length}`, trailerCanvas.width, trailerCanvas.height);
+        trailerCtx.fillText(
+          `trailers: ${trailers.length}`,
+          trailerCanvas.width,
+          trailerCanvas.height
+        );
       }
     };
     requestAnimationFrame(animate);
@@ -164,8 +184,10 @@ document.addEventListener("DOMContentLoaded", () => {
   dot.style.backgroundColor = "#222";
   root.appendChild(dot);
 
-  container.style.transition = `color ${interval-1000}ms, left ${interval-1000}ms, top ${interval-1000}ms`;
-  document.body.style.transition = `background-color ${interval-1000}ms`;
+  container.style.transition = `color ${interval - 1000}ms, left ${
+    interval - 1000
+  }ms, top ${interval - 1000}ms`;
+  document.body.style.transition = `background-color ${interval - 1000}ms`;
   let timer: any = null;
   let dotTimer: any = null;
   let dotIndex = 0;

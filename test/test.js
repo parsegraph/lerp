@@ -41,12 +41,12 @@ describe("lerp", function () {
     assert.equal(lerp(1, 1, 1), 1);
   });
 
-  it("can overload interpolation value", ()=>{
+  it("can overload interpolation value", () => {
     assert.equal(lerp(0, 1, 2), 2);
     assert.equal(lerp(0, 1, 10), 10);
   });
 
-  it("tolerates NaN by passing it through", ()=>{
+  it("tolerates NaN by passing it through", () => {
     assert.isNaN(lerp(NaN, 1, 2));
     assert.isNaN(lerp(0, NaN, 10));
     assert.isNaN(lerp(0, 0, NaN));
