@@ -28,74 +28,62 @@ document.addEventListener("DOMContentLoaded", () => {
   root.appendChild(trailerCanvas);
 
   const interval = 6000;
-  type Trailer = {
-    startX: number;
-    startY: number;
-    endX: number;
-    endY: number;
-    duration: number;
-    size: number;
-    color: string;
-    startTime: Date;
-    inUse: boolean;
-  };
-
-  const trailers: Trailer[] = [];
-
-  const makeTrailer = (
-    startX: number,
-    startY: number,
-    color: string
-  ): Trailer => {
-    const startTime = new Date();
-    const duration = Math.random() * (interval - 1000);
-    const size = Math.floor(1 + 50 * Math.random());
-    const endX = Math.random() * root.clientWidth;
-    const endY = Math.random() * root.clientHeight;
-    for (let i = 0; i < trailers.length; ++i) {
-      const trailer = trailers[i];
-      if (trailer.inUse) {
-        continue;
-      }
-      trailer.inUse = true;
-      trailer.startTime = startTime;
-      trailer.duration = duration;
-      trailer.color = color;
-      trailer.size = size;
-      trailer.endX = endX;
-      trailer.endY = endY;
-      trailer.startX = startX;
-      trailer.startY = startY;
-      return;
-    }
-    trailers.push({
-      inUse: true,
-      startX,
-      startY,
-      color,
-      startTime,
-      duration,
-      size,
-      endX,
-      endY,
-    });
-  };
 
   let playing: Date = null;
   let lastPos: [number, number, string] = [0, 0, "rgb(255, 255, 255)"];
 
   const trailerDecay = 1.2;
 
+    type Trailer = {
+      startX: number;
+      startY: number;
+      endX: number;
+      endY: number;
+      duration: number;
+      size: number;
+      color: string;
+      startTime: Date;
+      inUse: boolean;
+    };
+  const trailers: Trailer[] = [];
+  let trailerIndex = 0;
+  for(let i = 0; i < 200; ++i) {
+    trailers.push({
+      inUse: false,
+      startX: 0,
+      startY: 0,
+      endX: 0,
+      endY: 0,
+      duration: 0,
+      size: 0,
+      color: "",
+      startTime: null,
+    });
+  }
+
   const moveContainer = () => {
-    const cleanTrailers = () => {
-      trailers.forEach((trailer) => {
-        if (
-          Date.now() - trailer.startTime.getTime() >
-          trailerDecay * trailer.duration
-        ) {
-          trailer.inUse = false;
-        }
-      });
+    trailerCtx.globalCompositeOperation = 'destination-over';
+
+    trailerIndex = 0;
+    trailers.forEach(trailer=>{
+      trailer.inUse = false;
+    });
+
+    const addTrailer = (
+      startX: number,
+      startY: number,
+      color: string
+    ) => {
+      const trailer = trailers[trailerIndex++];
+      trailer.inUse = true;
+      trailer.startX = startX;
+      trailer.startY = startY;
+      trailer.color = color;
+      trailer.startTime = new Date();
+      trailer.duration = Math.random() * (interval - 1000);
+      trailer.size = Math.floor(1 + 50 * Math.random());
+      trailer.endX = Math.random() * root.clientWidth;
+      trailer.endY = Math.random() * root.clientHeight;
     };
     playing = new Date();
     if (trailerCanvas.width !== root.clientWidth) {
@@ -110,16 +98,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const x = Math.random() * root.clientWidth;
     const y = Math.random() * root.clientHeight;
-    container.style.left = `${x}px`;
-    container.style.top = `${y}px`;
+    container.style.transform = `translate(${x}px, ${y}px)`;
     container.style.zIndex = "2";
 
     const minTrailers = 100;
     const numTrailers = Math.floor(minTrailers * Math.random());
     const bg = document.body.style.backgroundColor;
     if (lastPos) {
-      for (let i = 0; i < minTrailers + numTrailers; ++i) {
-        makeTrailer(...lastPos);
+      for (let i = 0; i < Math.min(trailers.length, minTrailers + numTrailers); ++i) {
+        addTrailer(...lastPos);
       }
     }
     lastPos = [x, y, bg];
@@ -128,12 +115,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       trailerCtx.clearRect(0, 0, trailerCanvas.width, trailerCanvas.height);
-      cleanTrailers();
       let needsUpdate = false;
       trailers.forEach((trailer) => {
+        if (
+          trailer.inUse &&
+          Date.now() - trailer.startTime.getTime() >
+          trailerDecay * trailer.duration
+        ) {
+          trailer.inUse = false;
+        }
         if (!trailer.inUse) {
           return;
         }
+
         const { duration, size, startX, startY, endX, endY, color, startTime } =
           trailer;
         const elapsed = Math.min(
@@ -143,10 +137,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const pct = Math.min(1, elapsed / (trailerDecay * duration));
         trailerCtx.fillStyle = color;
         trailerCtx.beginPath();
-        trailerCtx.arc(
+        const curSize = lerp(lerp(1, size, Math.min(1, pct * 5)), 1, pct);
+        trailerCtx.ellipse(
           lerp(startX, endX, pct),
           lerp(startY, endY, pct),
-          lerp(lerp(1, size, Math.min(1, pct * 5)), 1, pct),
+          curSize,
+          curSize,
+          0,
           0,
           2 * Math.PI
         );
@@ -184,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
   dot.style.backgroundColor = "#222";
   root.appendChild(dot);
 
-  container.style.transition = `color ${interval - 1000}ms, left ${
+  container.style.transition = `color ${interval - 1000}ms, transform ${
     interval - 1000
   }ms, top ${interval - 1000}ms`;
   document.body.style.transition = `background-color ${interval - 1000}ms`;
