@@ -1,6 +1,6 @@
 {
   "name": "parsegraph-lerp",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "lerp",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
